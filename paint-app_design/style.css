@@ -10,3 +10,13 @@ body {
 canvas {
     border: 1px solid #000;
 }
+
+#toolbar {
+    display: flex;
+    justify-content: center;
+}
+
+#colorPicker, #sizePicker {
+    margin: 0 5px;
+}
+

@@ -1,6 +1,8 @@
 document.addEventListener('DOMContentLoaded', () => {
     const canvas = document.getElementById('paintCanvas');
     const ctx = canvas.getContext('2d');
+    const colorPicker = document.getElementById('colorPicker');
+    const sizePicker = document.getElementById('sizePicker');
     let painting = false;
 
     function startPosition(e) {
@@ -17,9 +19,9 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!painting) {
             return;
         }
-        ctx.lineWidth = 5;
+        ctx.lineWidth = sizePicker.value;
         ctx.lineCap = 'round';
-        ctx.strokeStyle = 'black';
+        ctx.strokeStyle = colorPicker.value;
 
         ctx.lineTo(e.clientX - canvas.offsetLeft, e.clientY - canvas.offsetTop);
         ctx.stroke();
