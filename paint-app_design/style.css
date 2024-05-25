@@ -1,24 +1,41 @@
+.button-column {
+    display: flex;
+    flex-direction: column;
+    margin-right: 10px; /* Зазначте бажаний відступ між стовпчиками */
+}
 body {
     display: flex;
     justify-content: center;
     align-items: center;
-    height: 100vh;
+    height: 120vh;
+    background-color: #f0f2f5;
     margin: 0;
-    background-color: #f0f0f0;
 }
-
-canvas {
-    border: 1px solid #000;
-}
-
 #toolbar {
     display: flex;
-    justify-content: center;
     flex-direction: column;
-    gap: 10px;
-}
+    align-items: center;
+    padding: 50px;
+    margin: 100px;
+    background-color: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    width: 300px;
 
-#colorPicker, #sizePicker {
-    margin: 0 5px;
 }
-
+#paintCanvas {
+    border: 1px solid #cccccc;
+    border-radius: 8px;
+    background-color: #ffffff;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+.btn.active {
+    background-color: #007bff;
+    color: #ffffff;
+}
+.form-control-range {
+    width: 100%;
+}
+.custom-control-label {
+    margin-left: 5px;
+}
