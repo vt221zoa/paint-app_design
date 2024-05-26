@@ -1,23 +1,30 @@
 document.addEventListener('DOMContentLoaded', () => {
     const canvas = document.getElementById('paintCanvas');
     const ctx = canvas.getContext('2d', { willReadFrequently: true });
+
     const colorPicker = document.getElementById('colorPicker');
     const sizePicker = document.getElementById('sizePicker');
+
     const clearCanvasButton = document.getElementById('clearCanvas');
     const saveCanvasButton = document.getElementById('saveCanvas');
+
     const drawRectButton = document.getElementById('drawRect');
     const drawCircleButton = document.getElementById('drawCircle');
     const drawLineButton = document.getElementById('drawLine');
     const drawTriangleButton = document.getElementById('drawTriangle');
     const fillCheckbox = document.getElementById('fillCheckbox');
+
     const brushToolButton = document.getElementById('brushTool');
     const eraserToolButton = document.getElementById('eraserTool');
     const sprayToolButton = document.getElementById('sprayTool');
+
     const undoButton = document.getElementById('undoButton');
     const redoButton = document.getElementById('redoButton');
+
     const canvasWidthInput = document.getElementById('canvasWidth');
     const canvasHeightInput = document.getElementById('canvasHeight');
     const resizeCanvasButton = document.getElementById('resizeCanvas');
+
     const toolInfo = document.getElementById('toolInfo');
 
     let painting = false;
@@ -214,15 +221,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
     canvas.addEventListener('mousedown', startPosition);
     canvas.addEventListener('mouseup', endPosition);
+
     canvas.addEventListener('mousemove', draw);
+
     clearCanvasButton.addEventListener('click', clearCanvas);
     saveCanvasButton.addEventListener('click', saveCanvas);
+
     undoButton.addEventListener('click', undoLastAction);
     redoButton.addEventListener('click', redoLastAction);
 
     brushToolButton.addEventListener('click', () => setActiveTool('brush', brushToolButton));
     eraserToolButton.addEventListener('click', () => setActiveTool('eraser', eraserToolButton));
     sprayToolButton.addEventListener('click', () => setActiveTool('spray', sprayToolButton));
+
     drawRectButton.addEventListener('click', () => setActiveTool('rectangle', drawRectButton));
     drawCircleButton.addEventListener('click', () => setActiveTool('circle', drawCircleButton));
     drawLineButton.addEventListener('click', () => setActiveTool('line', drawLineButton));
@@ -244,8 +255,8 @@ document.addEventListener('DOMContentLoaded', () => {
             alert("Invalid canvas size.");
         }
     });
-    sizePicker.addEventListener('input', updateToolInfo);
 
+    sizePicker.addEventListener('input', updateToolInfo);
     setActiveTool('brush', brushToolButton);
     updateToolInfo();
 });
