@@ -1,21 +1,55 @@
 document.addEventListener('DOMContentLoaded', () => {
     const canvas = document.getElementById('paintCanvas');
-    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+    const ctx = canvas.getContext('2d', {willReadFrequently: true});
     const colorPicker = document.getElementById('colorPicker');
+    const colorPickerBody = document.getElementById('colorPickerBody');
+    const colorCodeInput = document.getElementById('colorCodeInput');
     const sizePicker = document.getElementById('sizePicker');
     const clearCanvasButton = document.getElementById('clearCanvas');
     const saveCanvasButton = document.getElementById('saveCanvas');
     const brushToolButton = document.getElementById('brushTool');
     const eraserToolButton = document.getElementById('eraserTool');
     const sprayToolButton = document.getElementById('sprayTool');
-    const toolInfo = document.getElementById('toolInfo');
+    const sizeLabel = document.getElementById('sizeLabel');
+    const paletteContainer = document.querySelector('.palette');
+    const palette = [
+        "#000000", "#2D2D2D", "#5B5B5B", "#878787", "#B2B2B2", "#E0E0E0", "#FFFFFF",
+        "#FF0000", "#FF6A00", "#FFD800", "#00FF21", "#0094FF", "#0026FF", "#B200FF",
+        "#FFFFFF", "#FFFFFF", "#FFFFFF", "#FFFFFF", "#FFFFFF", "#FFFFFF", "#FFFFFF",
+        "#FFFFFF", "#FFFFFF", "#FFFFFF", "#FFFFFF", "#FFFFFF", "#FFFFFF", "#FFFFFF",
+        "#FFFFFF", "#FFFFFF", "#FFFFFF", "#FFFFFF", "#FFFFFF", "#FFFFFF", "#FFFFFF",
+        "#FFFFFF", "#FFFFFF", "#FFFFFF", "#FFFFFF", "#FFFFFF", "#FFFFFF", "#FFFFFF",
+    ]
 
     let painting = false;
     let tool = 'brush';
+    let colorIndex = 0;
     let undoStack = [];
     const MAX_UNDO_STEPS = 20;
 
     undoStack.push(ctx.getImageData(0, 0, canvas.width, canvas.height));
+
+    function updatePalette() {
+        paletteContainer.innerHTML = "";
+        paletteContainer.append(...palette.map((color, idx) => {
+            const unit = document.createElement("div")
+            unit.classList.add("paletteUnit")
+            if (idx === colorIndex) {
+                unit.classList.add("current")
+                colorPickerBody.style.backgroundColor = color
+                colorPicker.value = color
+                colorCodeInput.value = color
+            }
+            unit.style.backgroundColor = color
+            unit.onclick = () => {
+                colorIndex = idx;
+                updatePalette()
+            }
+            return unit
+        }))
+    }
+
+    updatePalette()
 
     function startPosition(e) {
         painting = true;
@@ -33,21 +67,18 @@ document.addEventListener('DOMContentLoaded', () => {
         ctx.beginPath();
     }
 
-    function draw(e) {
-        if (!painting) {
-            return;
-        }
-
-        if (tool === 'brush') {
+    const toolCallbacks = {
+        "brush": function (e) {
             ctx.lineWidth = sizePicker.value;
             ctx.lineCap = 'round';
-            ctx.strokeStyle = colorPicker.value;
+            ctx.strokeStyle = palette[colorIndex];
 
             ctx.lineTo(e.clientX - canvas.offsetLeft, e.clientY - canvas.offsetTop);
             ctx.stroke();
             ctx.beginPath();
             ctx.moveTo(e.clientX - canvas.offsetLeft, e.clientY - canvas.offsetTop);
-        } else if (tool === 'eraser') {
+        },
+        "eraser": function (e) {
             ctx.lineWidth = sizePicker.value;
             ctx.lineCap = 'round';
             ctx.strokeStyle = '#ffffff';
@@ -56,14 +87,23 @@ document.addEventListener('DOMContentLoaded', () => {
             ctx.stroke();
             ctx.beginPath();
             ctx.moveTo(e.clientX - canvas.offsetLeft, e.clientY - canvas.offsetTop);
-        } else if (tool === 'spray') {
-            ctx.fillStyle = colorPicker.value;
+        },
+        "spray": function (e) {
+            ctx.fillStyle = palette[colorIndex];
             for (let i = 0; i < 10; i++) {
                 const offsetX = Math.random() * sizePicker.value - sizePicker.value / 2;
                 const offsetY = Math.random() * sizePicker.value - sizePicker.value / 2;
                 ctx.fillRect(e.clientX - canvas.offsetLeft + offsetX, e.clientY - canvas.offsetTop + offsetY, 1, 1);
             }
         }
+    }
+
+    function draw(e) {
+        if (!painting) {
+            return;
+        }
+
+        toolCallbacks[tool](e)
     }
 
     function clearCanvas() {
@@ -92,11 +132,6 @@ document.addEventListener('DOMContentLoaded', () => {
         tool = newTool;
         document.querySelectorAll('button').forEach(btn => btn.classList.remove('active'));
         button.classList.add('active');
-        updateToolInfo();
-    }
-
-    function updateToolInfo() {
-        toolInfo.textContent = `Tool: ${tool.charAt(0).toUpperCase() + tool.slice(1)}, Size: ${sizePicker.value}`;
     }
 
     canvas.addEventListener('mousedown', startPosition);
@@ -125,10 +160,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
     colorPicker.addEventListener('input', () => {
         setActiveTool('brush', brushToolButton);
+        palette[colorIndex] = colorPicker.value
+        updatePalette()
     });
 
-    sizePicker.addEventListener('input', updateToolInfo);
+    sizePicker.addEventListener('input', () => {
+        sizeLabel.innerHTML = sizePicker.value
+    });
+
+    colorCodeInput.addEventListener("input", () => {
+        if(!/^#([0-9A-Fa-f]{0,6})$/.test(colorCodeInput.value)){
+            console.log("Bruh")
+            colorCodeInput.value = palette[colorIndex]
+            return
+        }
+        setActiveTool('brush', brushToolButton);
+        palette[colorIndex] = colorCodeInput.value
+        updatePalette()
+    })
 
     setActiveTool('brush', brushToolButton);
-    updateToolInfo();
 });

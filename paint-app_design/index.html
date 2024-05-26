@@ -7,26 +7,38 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<div id="toolbar">
-    <div id="Picker">
-        <input type="color" id="colorPicker" value="#000000">
-        <input type="range" id="sizePicker" min="1" max="10" value="5">
+<div class="container">
+    <div id="toolbar">
+        <div class="palette">
+        </div>
+        <div id="pickers">
+            <div id="colorPickerBody">
+                <input type="color" id="colorPicker" value="#000000">
+            </div>
+            <input type="text" id="colorCodeInput" value="#000000">
+        </div>
+        <div>
+            <label id="sizeLabel">5</label>
+            <input type="range" id="sizePicker" min="1" max="100" value="5">
+        </div>
+        <div class='actions'>
+            <button id="clearCanvas">Clear</button>
+            <button id="saveCanvas">Save</button>
+        </div>
+        <div>
+            <button id="brushTool" title="Brush">
+                <img src="./icons/paint-brush.png" alt="Brush">
+            </button>
+            <button id="eraserTool" title="Eraser">
+                <img src="./icons/eraser.png" alt="Eraser">
+            </button>
+            <button id="sprayTool" title="Spray">
+                <img src="./icons/spray.png" alt="Spray">
+            </button>
+        </div>
     </div>
-    <div class='buttons'> 
-        <button id="clearCanvas">Clear</button>
-        <button id="saveCanvas">Save</button>
-        <button id="brushTool" title="Brush">
-            <img src="./icons/paint-brush.png" alt="Brush">
-        </button>
-        <button id="eraserTool" title="Eraser">
-            <img src="./icons/eraser.png" alt="Eraser">
-        </button>
-        <button id="sprayTool" title="Spray">
-            <img src="./icons/spray.png" alt="Spray">
-        </button>
-    </div>
+    <canvas id="paintCanvas" width="800" height="600"></canvas>
 </div>
-<canvas id="paintCanvas" width="800" height="600"></canvas>
 <script src="script.js" defer></script>
 </body>
 </html>
