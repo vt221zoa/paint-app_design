@@ -13,6 +13,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const brushToolButton = document.getElementById('brushTool');
     const eraserToolButton = document.getElementById('eraserTool');
     const sprayToolButton = document.getElementById('sprayTool');
+    const fillToolButton = document.getElementById('fillTool');
     const undoButton = document.getElementById('undoButton');
     const redoButton = document.getElementById('redoButton');
     const canvasWidthInput = document.getElementById('canvasWidth');
@@ -52,6 +53,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function draw(e) {
+function draw(e) {
         if (!painting) return;
 
         const rect = canvas.getBoundingClientRect();
@@ -61,26 +63,122 @@ document.addEventListener('DOMContentLoaded', () => {
         ctx.lineWidth = sizePicker.value;
         ctx.lineCap = 'round';
 
-        if (tool === 'brush') {
-            ctx.strokeStyle = colorPicker.value;
-            ctx.lineTo(x, y);
-            ctx.stroke();
-            ctx.beginPath();
-            ctx.moveTo(x, y);
-        } else if (tool === 'eraser') {
-            ctx.strokeStyle = '#ffffff';
-            ctx.lineTo(x, y);
-            ctx.stroke();
-            ctx.beginPath();
-            ctx.moveTo(x, y);
-        } else if (tool === 'spray') {
-            ctx.fillStyle = colorPicker.value;
-            for (let i = 0; i < 10; i++) {
-                const offsetX = Math.random() * sizePicker.value - sizePicker.value / 2;
-                const offsetY = Math.random() * sizePicker.value - sizePicker.value / 2;
-                ctx.fillRect(x + offsetX, y + offsetY, 1, 1);
+        switch (tool) {
+            case 'brush':
+                ctx.strokeStyle = colorPicker.value;
+                ctx.lineTo(x, y);
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.moveTo(x, y);
+                break;
+            case 'eraser':
+                ctx.strokeStyle = '#ffffff';
+                ctx.lineTo(x, y);
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.moveTo(x, y);
+                break;
+            case 'spray':
+                ctx.fillStyle = colorPicker.value;
+                for (let i = 0; i < 10; i++) {
+                    const offsetX = Math.random() * sizePicker.value - sizePicker.value / 2;
+                    const offsetY = Math.random() * sizePicker.value - sizePicker.value / 2;
+                    ctx.fillRect(x + offsetX, y + offsetY, 1, 1);
+                }
+                break;
+            case 'fill':
+                fill(e);
+                break;
+        }
+    }
+
+    function fill(e) {
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const pixelStack = [{ x: e.clientX - canvas.offsetLeft, y: e.clientY - canvas.offsetTop }];
+        const fillColor = hexToRgb(colorPicker.value);
+        const targetColor = ctx.getImageData(pixelStack[0].x, pixelStack[0].y, 1, 1).data;
+
+        function hexToRgb(hex) {
+            return {
+                r: parseInt(hex.substring(1, 3), 16),
+                g: parseInt(hex.substring(3, 5), 16),
+                b: parseInt(hex.substring(5, 7), 16)
+            };
+        }
+
+        function matchColor(pixelPos) {
+            const r = imageData.data[pixelPos];
+            const g = imageData.data[pixelPos + 1];
+            const b = imageData.data[pixelPos + 2];
+            return r === targetColor[0] && g === targetColor[1] && b === targetColor[2];
+        }
+
+        function setColor(pixelPos) {
+            imageData.data[pixelPos] = fillColor.r;
+            imageData.data[pixelPos + 1] = fillColor.g;
+            imageData.data[pixelPos + 2] = fillColor.b;
+            imageData.data[pixelPos + 3] = 255;
+        }
+
+        let isEmpty = true;
+        for (let i = 0; i < imageData.data.length; i += 4) {
+            if (imageData.data[i + 3] !== 0) {
+                isEmpty = false;
+                break;
             }
         }
+
+        if (isEmpty) {
+            ctx.fillStyle = colorPicker.value;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            return;
+        }
+
+        while (pixelStack.length) {
+            const newPos = pixelStack.pop();
+            const x = newPos.x;
+            let y = newPos.y;
+            let pixelPos = (y * canvas.width + x) * 4;
+
+            while (y-- >= 0 && matchColor(pixelPos)) {
+                pixelPos -= canvas.width * 4;
+            }
+            pixelPos += canvas.width * 4;
+            ++y;
+
+            let reachLeft = false;
+            let reachRight = false;
+
+            while (y++ < canvas.height - 1 && matchColor(pixelPos)) {
+                setColor(pixelPos);
+
+                if (x > 0) {
+                    if (matchColor(pixelPos - 4)) {
+                        if (!reachLeft) {
+                            pixelStack.push({ x: x - 1, y: y });
+                            reachLeft = true;
+                        }
+                    } else if (reachLeft) {
+                        reachLeft = false;
+                    }
+                }
+
+                if (x < canvas.width - 1) {
+                    if (matchColor(pixelPos + 4)) {
+                        if (!reachRight) {
+                            pixelStack.push({ x: x + 1, y: y });
+                            reachRight = true;
+                        }
+                    } else if (reachRight) {
+                        reachRight = false;
+                    }
+                }
+
+                pixelPos += canvas.width * 4;
+            }
+        }
+
+        ctx.putImageData(imageData, 0, 0);
     }
 
     function drawShape(e) {
@@ -211,4 +309,29 @@ document.addEventListener('DOMContentLoaded', () => {
             alert("Invalid canvas size.");
         }
     });
+
+    brushToolButton.addEventListener('click', () => {
+        setActiveTool('brush', brushToolButton);
+    });
+
+    eraserToolButton.addEventListener('click', () => {
+        setActiveTool('eraser', eraserToolButton);
+    });
+
+    sprayToolButton.addEventListener('click', () => {
+        setActiveTool('spray', sprayToolButton);
+    });
+
+    fillToolButton.addEventListener('click', () => {
+        setActiveTool('fill', fillToolButton);
+    });
+
+    colorPicker.addEventListener('input', () => {
+        setActiveTool('brush', brushToolButton);
+    });
+
+    sizePicker.addEventListener('input', updateToolInfo);
+
+    setActiveTool('brush', brushToolButton);
+    updateToolInfo();
 });
