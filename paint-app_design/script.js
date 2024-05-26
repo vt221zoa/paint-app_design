@@ -25,6 +25,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const canvasHeightInput = document.getElementById('canvasHeight');
     const resizeCanvasButton = document.getElementById('resizeCanvas');
 
+    const paletteContainer = document.querySelector('.palette');
+
+    const palette = [
+        "#000000", "#2D2D2D", "#5B5B5B", "#878787", "#B2B2B2", "#E0E0E0", "#FFFFFF", "#FFFFFF",
+        "#FF6A00", "#FFD800", "#00FF21", "#0094FF", "#0026FF", "#B200FF", "#FFFFFF", "#FFFFFF"
+    ];
+    let colorIndex = 0;
+
+
     const toolInfo = document.getElementById('toolInfo');
 
     let painting = false;
@@ -61,6 +70,27 @@ document.addEventListener('DOMContentLoaded', () => {
         ctx.beginPath();
     }
 
+    function updatePalette() {
+        paletteContainer.innerHTML = "";
+        paletteContainer.append(...palette.map((color, idx) => {
+            const unit = document.createElement("div");
+            unit.classList.add("paletteUnit");
+            if (idx === colorIndex) {
+                unit.classList.add("current");
+                colorPicker.value = color;
+            }
+            unit.style.backgroundColor = color;
+            unit.onclick = () => {
+                colorIndex = idx;
+                colorPicker.value = color;
+                updatePalette();
+            };
+            return unit;
+        }));
+    }
+
+    updatePalette();
+
     function draw(e) {
         if (!painting) return;
 
@@ -92,7 +122,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function drawSpray(e) {
-        ctx.fillStyle = colorPicker.value;
+        ctx.fillStyle = palette[colorIndex];
         const [x, y] = getCursorPosition(e);
         for (let i = 0; i < 10; i++) {
             const offsetX = Math.random() * sizePicker.value - sizePicker.value / 2;
@@ -100,6 +130,7 @@ document.addEventListener('DOMContentLoaded', () => {
             ctx.fillRect(x + offsetX, y + offsetY, 1, 1);
         }
     }
+
 
     function drawShape(e) {
         const rect = canvas.getBoundingClientRect();
@@ -112,8 +143,8 @@ document.addEventListener('DOMContentLoaded', () => {
         ctx.putImageData(undoStack[undoStack.length - 1], 0, 0);
 
         ctx.lineWidth = sizePicker.value;
-        ctx.strokeStyle = colorPicker.value;
-        ctx.fillStyle = colorPicker.value;
+        ctx.strokeStyle = palette[colorIndex];
+        ctx.fillStyle = palette[colorIndex];
 
         switch (tool) {
             case 'rectangle':
@@ -128,6 +159,8 @@ document.addEventListener('DOMContentLoaded', () => {
             case 'triangle':
                 drawTriangle(startX, startY, mouseX, mouseY);
                 break;
+            default:
+                break;
         }
     }
 
@@ -138,6 +171,7 @@ document.addEventListener('DOMContentLoaded', () => {
             ctx.strokeRect(startX, startY, endX - startX, endY - startY);
         }
     }
+
 
     function drawCircle(startX, startY, endX, endY) {
         const radius = Math.sqrt(Math.pow(endX - startX, 2) + Math.pow(endY - startY, 2));
@@ -255,6 +289,12 @@ document.addEventListener('DOMContentLoaded', () => {
             alert("Invalid canvas size.");
         }
     });
+
+    colorPicker.addEventListener('input', (e) => {
+        palette[colorIndex] = e.target.value;
+        updatePalette();
+    });
+
 
     sizePicker.addEventListener('input', updateToolInfo);
     setActiveTool('brush', brushToolButton);
