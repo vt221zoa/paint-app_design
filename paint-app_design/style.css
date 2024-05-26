@@ -1,65 +1,44 @@
+.button-column {
+	display: flex;
+	flex-direction: column;
+	margin-right: 10px;
+}
 body {
 	display: flex;
 	justify-content: center;
 	align-items: center;
-	height: 100vh;
+	height: 120vh;
+	background-color: #f0f2f5;
 	margin: 0;
 }
-
-canvas {
-	border: 1px solid #000;
-}
-
 #toolbar {
 	display: flex;
 	flex-direction: column;
 	align-items: center;
-	gap: 10px;
+	padding: 50px;
+	margin: 100px;
+	background-color: #ffffff;
+	border-radius: 8px;
+	box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+	width: 300px;
 }
-
-#Picker {
-	display: flex;
-	align-items: center;
+#paintCanvas {
+	border: 1px solid #cccccc;
+	border-radius: 8px;
+	background-color: #ffffff;
+	box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
-
-#colorPicker,
-#sizePicker {
-	margin: 0 5px;
+.btn.active {
+	background-color: #007bff;
+	color: #ffffff;
 }
-
-.buttons {
-	width: auto;
-	display: flex;
-	flex-direction: column;
-	align-items: center;
+.form-control-range {
+	width: 100%;
 }
-
-button {
-	background: none;
-	border: none;
-	cursor: pointer;
-	padding: 5px;
-	outline: none;
-	width: min-content;
+.custom-control-label {
+	margin-left: 5px;
 }
-
-button img {
-	width: 24px;
-	height: 24px;
-}
-
-button.active {
-	border: 2px solid #000;
-	border-radius: 4px;
-}
-
-#toolInfo {
-	font-size: 16px;
-}
-
-.brush-preview {
-	width: 50px;
-	height: 50px;
-	border: 1px solid #000;
-	margin-top: 10px;
+.buttons img {
+	width: 20px;
+	height: 20px;
 }
