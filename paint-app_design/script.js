@@ -19,10 +19,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const canvasWidthInput = document.getElementById('canvasWidth');
     const canvasHeightInput = document.getElementById('canvasHeight');
     const resizeCanvasButton = document.getElementById('resizeCanvas');
+    const toolInfo = document.getElementById('toolInfo');
 
     let painting = false;
     let tool = 'brush';
     let undoStack = [];
+    let redoStack = [];
     const MAX_UNDO_STEPS = 20;
 
     undoStack.push(ctx.getImageData(0, 0, canvas.width, canvas.height));
@@ -44,6 +46,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 drawShape(e);
             }
             undoStack.push(ctx.getImageData(0, 0, canvas.width, canvas.height));
+            redoStack = [];
             if (undoStack.length > MAX_UNDO_STEPS) {
                 undoStack.shift();
             }
@@ -53,50 +56,54 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function draw(e) {
-function draw(e) {
         if (!painting) return;
-
-        const rect = canvas.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
-
-        ctx.lineWidth = sizePicker.value;
-        ctx.lineCap = 'round';
 
         switch (tool) {
             case 'brush':
-                ctx.strokeStyle = colorPicker.value;
-                ctx.lineTo(x, y);
-                ctx.stroke();
-                ctx.beginPath();
-                ctx.moveTo(x, y);
+                drawTool(e, colorPicker.value);
                 break;
             case 'eraser':
-                ctx.strokeStyle = '#ffffff';
-                ctx.lineTo(x, y);
-                ctx.stroke();
-                ctx.beginPath();
-                ctx.moveTo(x, y);
+                drawTool(e, '#ffffff');
                 break;
             case 'spray':
-                ctx.fillStyle = colorPicker.value;
-                for (let i = 0; i < 10; i++) {
-                    const offsetX = Math.random() * sizePicker.value - sizePicker.value / 2;
-                    const offsetY = Math.random() * sizePicker.value - sizePicker.value / 2;
-                    ctx.fillRect(x + offsetX, y + offsetY, 1, 1);
-                }
+                drawSpray(e);
                 break;
             case 'fill':
-                fill(e);
+                fillObject(e);
+                break;
+            default:
                 break;
         }
     }
 
-    function fill(e) {
+    function drawTool(e, color) {
+        ctx.lineWidth = sizePicker.value;
+        ctx.lineCap = 'round';
+        ctx.strokeStyle = color;
+
+        const [x, y] = getCursorPosition(e);
+        ctx.lineTo(x, y);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+    }
+
+    function drawSpray(e) {
+        ctx.fillStyle = colorPicker.value;
+        const [x, y] = getCursorPosition(e);
+        for (let i = 0; i < 10; i++) {
+            const offsetX = Math.random() * sizePicker.value - sizePicker.value / 2;
+            const offsetY = Math.random() * sizePicker.value - sizePicker.value / 2;
+            ctx.fillRect(x + offsetX, y + offsetY, 1, 1);
+        }
+    }
+
+    function fillObject(e) {
         const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-        const pixelStack = [{ x: e.clientX - canvas.offsetLeft, y: e.clientY - canvas.offsetTop }];
+        const [x, y] = getCursorPosition(e);
+        const pixelStack = [{ x, y }];
         const fillColor = hexToRgb(colorPicker.value);
-        const targetColor = ctx.getImageData(pixelStack[0].x, pixelStack[0].y, 1, 1).data;
+        const targetColor = ctx.getImageData(x, y, 1, 1).data;
 
         function hexToRgb(hex) {
             return {
@@ -208,6 +215,9 @@ function draw(e) {
             case 'triangle':
                 drawTriangle(startX, startY, mouseX, mouseY);
                 break;
+            case 'fill':
+                fill(e);
+                break;
         }
     }
 
@@ -253,6 +263,7 @@ function draw(e) {
     function clearCanvas() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         undoStack = [];
+        redoStack = [];
         undoStack.push(ctx.getImageData(0, 0, canvas.width, canvas.height));
     }
 
@@ -272,11 +283,29 @@ function draw(e) {
             alert("Cannot undo further.");
         }
     }
+    function redoLastAction() {
+        if (redoStack.length > 0) {
+            const imageData = redoStack.pop();
+            undoStack.push(imageData);
+            ctx.putImageData(imageData, 0, 0);
+        } else {
+            alert("Cannot redo further.");
+        }
+    }
+
+    function updateToolInfo() {
+        toolInfo.textContent = `Tool: ${tool.charAt(0).toUpperCase() + tool.slice(1)}, Size: ${sizePicker.value}`;
+    }
 
     function setActiveTool(newTool, button) {
         tool = newTool;
         document.querySelectorAll('.btn.tool').forEach(btn => btn.classList.remove('active'));
         button.classList.add('active');
+        updateToolInfo();
+    }
+
+    function getCursorPosition(e) {
+        return [e.clientX - canvas.offsetLeft, e.clientY - canvas.offsetTop];
     }
 
     canvas.addEventListener('mousedown', startPosition);
@@ -285,6 +314,7 @@ function draw(e) {
     clearCanvasButton.addEventListener('click', clearCanvas);
     saveCanvasButton.addEventListener('click', saveCanvas);
     undoButton.addEventListener('click', undoLastAction);
+    redoButton.addEventListener('click', redoLastAction);
 
     brushToolButton.addEventListener('click', () => setActiveTool('brush', brushToolButton));
     eraserToolButton.addEventListener('click', () => setActiveTool('eraser', eraserToolButton));
@@ -293,6 +323,7 @@ function draw(e) {
     drawCircleButton.addEventListener('click', () => setActiveTool('circle', drawCircleButton));
     drawLineButton.addEventListener('click', () => setActiveTool('line', drawLineButton));
     drawTriangleButton.addEventListener('click', () => setActiveTool('triangle', drawTriangleButton));
+    fillToolButton.addEventListener('click', () => setActiveTool('fill', fillToolButton));
 
     resizeCanvasButton.addEventListener('click', () => {
         const width = parseInt(canvasWidthInput.value);
@@ -304,32 +335,12 @@ function draw(e) {
             ctx.fillStyle = "#FFFFFF";
             ctx.fillRect(0, 0, canvas.width, canvas.height);
             undoStack = [];
+            redoStack = [];
             undoStack.push(ctx.getImageData(0, 0, canvas.width, canvas.height));
         } else {
             alert("Invalid canvas size.");
         }
     });
-
-    brushToolButton.addEventListener('click', () => {
-        setActiveTool('brush', brushToolButton);
-    });
-
-    eraserToolButton.addEventListener('click', () => {
-        setActiveTool('eraser', eraserToolButton);
-    });
-
-    sprayToolButton.addEventListener('click', () => {
-        setActiveTool('spray', sprayToolButton);
-    });
-
-    fillToolButton.addEventListener('click', () => {
-        setActiveTool('fill', fillToolButton);
-    });
-
-    colorPicker.addEventListener('input', () => {
-        setActiveTool('brush', brushToolButton);
-    });
-
     sizePicker.addEventListener('input', updateToolInfo);
 
     setActiveTool('brush', brushToolButton);
