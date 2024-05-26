@@ -4,26 +4,35 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Paint App ;)</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 <div id="toolbar">
-    <div id="Picker">
-        <input type="color" id="colorPicker" value="#000000">
-        <input type="range" id="sizePicker" min="1" max="10" value="5">
+    <div id="Picker" class="d-flex mb-3">
+        <input type="color" id="colorPicker" value="#000000" class="form-control form-control-color mr-2">
+        <input type="range" id="sizePicker" min="1" max="10" value="5" class="form-control-range">
     </div>
-    <div class='buttons'> 
-        <button id="clearCanvas">Clear</button>
-        <button id="saveCanvas">Save</button>
-        <button id="brushTool" title="Brush">
-            <img src="./icons/paint-brush.png" alt="Brush">
-        </button>
-        <button id="eraserTool" title="Eraser">
-            <img src="./icons/eraser.png" alt="Eraser">
-        </button>
-        <button id="sprayTool" title="Spray">
-            <img src="./icons/spray.png" alt="Spray">
-        </button>
+
+    <div class='buttons mb-2'>
+        <button id="clearCanvas" class="btn btn-secondary mb-2 w-100">Clear</button>
+        <button id="saveCanvas" class="btn btn-primary mb-2 w-100">Save</button>
+        <button id="brushTool" class="btn btn-warning mb-2 w-100 tool" title="Brush">Brush</button>
+        <button id="eraserTool" class="btn btn-danger mb-2 w-100 tool" title="Eraser">Eraser</button>
+        <button id="sprayTool" class="btn btn-info mb-2 w-100 tool" title="Spray">Spray</button>
+        <button id="drawRect" class="btn btn-info mb-2 w-100 tool">Rectangle</button>
+        <button id="drawCircle" class="btn btn-info mb-2 w-100 tool">Circle</button>
+        <button id="drawLine" class="btn btn-info mb-2 w-100 tool">Line</button>
+        <button id="drawTriangle" class="btn btn-info mb-2 w-100 tool">Triangle</button>
+        <div class="custom-control custom-checkbox mb-2">
+            <input type="checkbox" class="custom-control-input" id="fillCheckbox">
+            <label class="custom-control-label" for="fillCheckbox">Fill Shape</label>
+        </div>
+        <button id="undoButton" class="btn btn-secondary mb-2 w-100">Undo</button>
+        <button id="redoButton" class="btn btn-secondary mb-2 w-100">Redo</button>
+        <input type="number" id="canvasWidth" class="form-control mb-2" placeholder="Canvas Width" min="100" value="800">
+        <input type="number" id="canvasHeight" class="form-control mb-2" placeholder="Canvas Height" min="100" value="600">
+        <button id="resizeCanvas" class="btn btn-primary mb-2 w-100">Resize Canvas</button>
     </div>
 </div>
 <canvas id="paintCanvas" width="800" height="600"></canvas>
