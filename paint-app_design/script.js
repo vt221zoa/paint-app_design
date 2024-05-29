@@ -131,7 +131,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-
     function drawShape(e) {
         const rect = canvas.getBoundingClientRect();
         const mouseX = e.clientX - rect.left;
@@ -172,7 +171,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-
     function drawCircle(startX, startY, endX, endY) {
         const radius = Math.sqrt(Math.pow(endX - startX, 2) + Math.pow(endY - startY, 2));
         ctx.beginPath();
@@ -205,17 +203,23 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function clearCanvas() {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        undoStack = [];
-        redoStack = [];
-        undoStack.push(ctx.getImageData(0, 0, canvas.width, canvas.height));
+        const confirmation = confirm('Are you sure you want to clear the canvas?');
+        if (confirmation) {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            undoStack = [];
+            redoStack = [];
+            undoStack.push(ctx.getImageData(0, 0, canvas.width, canvas.height));
+        }
     }
 
     function saveCanvas() {
-        const link = document.createElement('a');
-        link.download = 'painting.png';
-        link.href = canvas.toDataURL();
-        link.click();
+        const fileName = prompt('Enter the name for your painting:');
+        if (fileName) {
+            const link = document.createElement('a');
+            link.download = `${fileName}.png`;
+            link.href = canvas.toDataURL();
+            link.click();
+        }
     }
 
     function undoLastAction() {
@@ -227,6 +231,7 @@ document.addEventListener('DOMContentLoaded', () => {
             alert("Cannot undo further.");
         }
     }
+
     function redoLastAction() {
         if (redoStack.length > 0) {
             const imageData = redoStack.pop();
@@ -294,7 +299,6 @@ document.addEventListener('DOMContentLoaded', () => {
         palette[colorIndex] = e.target.value;
         updatePalette();
     });
-
 
     sizePicker.addEventListener('input', updateToolInfo);
     setActiveTool('brush', brushToolButton);
