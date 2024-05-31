@@ -20,6 +20,8 @@ document.addEventListener('DOMContentLoaded',   () => {
     const brushToolButton = document.getElementById('brushTool');
     const eraserToolButton = document.getElementById('eraserTool');
     const sprayToolButton = document.getElementById('sprayTool');
+    const oilBrushToolButton = document.getElementById('oilBrushTool');
+    const markerToolButton = document.getElementById('markerTool');
 
     const undoButton = document.getElementById('undoButton');
     const redoButton = document.getElementById('redoButton');
@@ -170,6 +172,66 @@ document.addEventListener('DOMContentLoaded',   () => {
             }
         }
     }
+    class Marker extends Tool {
+        constructor(ctx, colorPicker, sizePicker) {
+            super();
+            this.ctx = ctx;
+            this.colorPicker = colorPicker;
+            this.sizePicker = sizePicker;
+            this.initialAlpha = 0.5;
+        }
+
+        draw(e) {
+            this.ctx.lineWidth = this.sizePicker.value;
+            this.ctx.lineCap = 'round';
+            this.ctx.strokeStyle = this.colorPicker.value;
+            this.ctx.globalAlpha = this.initialAlpha;
+
+            const [x, y] = getCursorPosition(e);
+            this.ctx.lineTo(x, y);
+            this.ctx.stroke();
+            this.ctx.beginPath();
+            this.ctx.moveTo(x, y);
+
+            this.resetAlpha();
+        }
+
+        resetAlpha() {
+            this.ctx.globalAlpha = 1;
+        }
+    }
+
+    class OilBrush extends Tool {
+        constructor(ctx, colorPicker, sizePicker) {
+            super();
+            this.ctx = ctx;
+            this.colorPicker = colorPicker;
+            this.sizePicker = sizePicker;
+            this.density = 5;
+            this.initialAlpha = 0.2;
+        }
+
+        draw(e) {
+            this.ctx.lineWidth = this.sizePicker.value;
+            this.ctx.lineCap = 'round';
+            this.ctx.strokeStyle = this.colorPicker.value;
+            this.ctx.globalAlpha = this.initialAlpha;
+
+            const [x, y] = getCursorPosition(e);
+            for (let i = 0; i < this.density; i++) {
+                const offsetX = Math.random() * this.sizePicker.value - this.sizePicker.value / 2;
+                const offsetY = Math.random() * this.sizePicker.value - this.sizePicker.value / 2;
+                this.ctx.beginPath();
+                this.ctx.moveTo(x + offsetX, y + offsetY);
+                this.ctx.lineTo(x, y);
+                this.ctx.stroke();
+            }
+            this.resetAlpha();
+        }
+        resetAlpha() {
+            this.ctx.globalAlpha = 1;
+        }
+    }
 
     class ToolFactory {
         static createTool(type, ctx, colorPicker, sizePicker, palette, colorIndex) {
@@ -180,6 +242,10 @@ document.addEventListener('DOMContentLoaded',   () => {
                     return new Eraser(ctx, sizePicker);
                 case 'spray':
                     return new Spray(ctx, palette, colorIndex, sizePicker);
+                case 'oilBrush':
+                    return new OilBrush(ctx, colorPicker, sizePicker);
+                case 'marker':
+                    return new Marker(ctx, colorPicker, sizePicker);
                 default:
                     throw new Error("Unknown tool type.");
             }
@@ -338,6 +404,8 @@ document.addEventListener('DOMContentLoaded',   () => {
     brushToolButton.addEventListener('click', () => setActiveTool('brush', brushToolButton));
     eraserToolButton.addEventListener('click', () => setActiveTool('eraser', eraserToolButton));
     sprayToolButton.addEventListener('click', () => setActiveTool('spray', sprayToolButton));
+    oilBrushToolButton.addEventListener('click', () => setActiveTool('oilBrush', oilBrushToolButton));
+    markerToolButton.addEventListener('click', () => setActiveTool('marker', markerToolButton));
 
     drawRectButton.addEventListener('click', () => setActiveShape('rectangle', drawRectButton));
     drawCircleButton.addEventListener('click', () => setActiveShape('circle', drawCircleButton));
