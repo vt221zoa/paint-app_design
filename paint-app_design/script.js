@@ -1,4 +1,7 @@
-document.addEventListener('DOMContentLoaded', () => {
+import CanvasUIObserver from './Observer/CanvasUIObserver.js';
+import { CanvasSubject } from './Observer/CanvasSubject.js';
+
+document.addEventListener('DOMContentLoaded',   () => {
     const canvas = document.getElementById('paintCanvas');
     const ctx = canvas.getContext('2d', { willReadFrequently: true });
 
@@ -25,7 +28,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const canvasHeightInput = document.getElementById('canvasHeight');
     const resizeCanvasButton = document.getElementById('resizeCanvas');
 
+    const toolInfo = document.getElementById('toolInfo');
+
     const paletteContainer = document.querySelector('.palette');
+
+    const canvasSubject = new CanvasSubject();
+    const canvasUIObserver = new CanvasUIObserver(canvasSubject);
+
 
     const palette = [
         "#000000", "#2D2D2D", "#5B5B5B", "#878787", "#B2B2B2", "#E0E0E0", "#FFFFFF", "#FFFFFF",
@@ -33,11 +42,9 @@ document.addEventListener('DOMContentLoaded', () => {
     ];
     let colorIndex = 0;
 
-
-    const toolInfo = document.getElementById('toolInfo');
-
     let painting = false;
     let tool = 'brush';
+    let activeShape = null;
     let undoStack = [];
     let redoStack = [];
     const MAX_UNDO_STEPS = 20;
@@ -47,17 +54,18 @@ document.addEventListener('DOMContentLoaded', () => {
     function startPosition(e) {
         painting = true;
         const rect = canvas.getBoundingClientRect();
-        if (['rectangle', 'circle', 'line', 'triangle'].includes(tool)) {
+        if (['rectangle', 'circle', 'line', 'triangle'].includes(activeShape)) {
             canvas.startX = e.clientX - rect.left;
             canvas.startY = e.clientY - rect.top;
         } else {
             draw(e);
+            canvasSubject.notifyObservers();
         }
     }
 
     function endPosition(e) {
         if (painting) {
-            if (['rectangle', 'circle', 'line', 'triangle'].includes(tool)) {
+            if (['rectangle', 'circle', 'line', 'triangle'].includes(activeShape)) {
                 drawShape(e);
             }
             undoStack.push(ctx.getImageData(0, 0, canvas.width, canvas.height));
@@ -92,44 +100,92 @@ document.addEventListener('DOMContentLoaded', () => {
     updatePalette();
 
     function draw(e) {
-        if (!painting) return;
+        if (!painting || activeShape) return;
+        currentTool.draw(e);
+    }
 
-        switch (tool) {
-            case 'brush':
-                drawTool(e, colorPicker.value);
-                break;
-            case 'eraser':
-                drawTool(e, '#ffffff');
-                break;
-            case 'spray':
-                drawSpray(e);
-                break;
-            default:
-                break;
+    class Tool {
+        draw(e) {
+            throw new Error("Method 'draw()' must be implemented.");
         }
     }
 
-    function drawTool(e, color) {
-        ctx.lineWidth = sizePicker.value;
-        ctx.lineCap = 'round';
-        ctx.strokeStyle = color;
+    class Brush extends Tool {
+        constructor(ctx, colorPicker, sizePicker) {
+            super();
+            this.ctx = ctx;
+            this.colorPicker = colorPicker;
+            this.sizePicker = sizePicker;
+        }
 
-        const [x, y] = getCursorPosition(e);
-        ctx.lineTo(x, y);
-        ctx.stroke();
-        ctx.beginPath();
-        ctx.moveTo(x, y);
-    }
+        draw(e) {
+            this.ctx.lineWidth = this.sizePicker.value;
+            this.ctx.lineCap = 'round';
+            this.ctx.strokeStyle = this.colorPicker.value;
 
-    function drawSpray(e) {
-        ctx.fillStyle = palette[colorIndex];
-        const [x, y] = getCursorPosition(e);
-        for (let i = 0; i < 10; i++) {
-            const offsetX = Math.random() * sizePicker.value - sizePicker.value / 2;
-            const offsetY = Math.random() * sizePicker.value - sizePicker.value / 2;
-            ctx.fillRect(x + offsetX, y + offsetY, 1, 1);
+            const [x, y] = getCursorPosition(e);
+            this.ctx.lineTo(x, y);
+            this.ctx.stroke();
+            this.ctx.beginPath();
+            this.ctx.moveTo(x, y);
         }
     }
+
+    class Eraser extends Tool {
+        constructor(ctx, sizePicker) {
+            super();
+            this.ctx = ctx;
+            this.sizePicker = sizePicker;
+        }
+
+        draw(e) {
+            this.ctx.lineWidth = this.sizePicker.value;
+            this.ctx.lineCap = 'round';
+            this.ctx.strokeStyle = '#ffffff';
+
+            const [x, y] = getCursorPosition(e);
+            this.ctx.lineTo(x, y);
+            this.ctx.stroke();
+            this.ctx.beginPath();
+            this.ctx.moveTo(x, y);
+        }
+    }
+
+    class Spray extends Tool {
+        constructor(ctx, palette, colorIndex, sizePicker) {
+            super();
+            this.ctx = ctx;
+            this.palette = palette;
+            this.colorIndex = colorIndex;
+            this.sizePicker = sizePicker;
+        }
+
+        draw(e) {
+            this.ctx.fillStyle = this.palette[this.colorIndex];
+            const [x, y] = getCursorPosition(e);
+            for (let i = 0; i < 10; i++) {
+                const offsetX = Math.random() * this.sizePicker.value - this.sizePicker.value / 2;
+                const offsetY = Math.random() * this.sizePicker.value - this.sizePicker.value / 2;
+                this.ctx.fillRect(x + offsetX, y + offsetY, 1, 1);
+            }
+        }
+    }
+
+    class ToolFactory {
+        static createTool(type, ctx, colorPicker, sizePicker, palette, colorIndex) {
+            switch (type) {
+                case 'brush':
+                    return new Brush(ctx, colorPicker, sizePicker);
+                case 'eraser':
+                    return new Eraser(ctx, sizePicker);
+                case 'spray':
+                    return new Spray(ctx, palette, colorIndex, sizePicker);
+                default:
+                    throw new Error("Unknown tool type.");
+            }
+        }
+    }
+    let currentTool = ToolFactory.createTool('brush', ctx, colorPicker, sizePicker, palette, colorIndex);
 
     function drawShape(e) {
         const rect = canvas.getBoundingClientRect();
@@ -144,8 +200,9 @@ document.addEventListener('DOMContentLoaded', () => {
         ctx.lineWidth = sizePicker.value;
         ctx.strokeStyle = palette[colorIndex];
         ctx.fillStyle = palette[colorIndex];
+        canvasSubject.notifyObservers();
 
-        switch (tool) {
+        switch (activeShape) {
             case 'rectangle':
                 drawRectangle(startX, startY, mouseX, mouseY);
                 break;
@@ -242,15 +299,25 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    function updateToolInfo() {
-        toolInfo.textContent = `Tool: ${tool.charAt(0).toUpperCase() + tool.slice(1)}, Size: ${sizePicker.value}`;
+    function updateObjectInfo(object, size) {
+        toolInfo.textContent = `Tool: ${object.charAt(0).toUpperCase() + object.slice(1)}, Size: ${size.value}`;
     }
 
-    function setActiveTool(newTool, button) {
-        tool = newTool;
+    function setActiveTool(toolType, button) {
+        activeShape = null;
+        tool = toolType;
+        currentTool = ToolFactory.createTool(toolType, ctx, colorPicker, sizePicker, palette, colorIndex);
         document.querySelectorAll('.btn.tool').forEach(btn => btn.classList.remove('active'));
         button.classList.add('active');
-        updateToolInfo();
+        updateObjectInfo(tool,sizePicker);
+    }
+
+    function setActiveShape(shapeType, button) {
+        tool = null;
+        activeShape = shapeType;
+        document.querySelectorAll('.btn.tool').forEach(btn => btn.classList.remove('active'));
+        button.classList.add('active');
+        updateObjectInfo(activeShape,sizePicker);
     }
 
     function getCursorPosition(e) {
@@ -260,7 +327,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     canvas.addEventListener('mousedown', startPosition);
     canvas.addEventListener('mouseup', endPosition);
-
     canvas.addEventListener('mousemove', draw);
 
     clearCanvasButton.addEventListener('click', clearCanvas);
@@ -273,10 +339,10 @@ document.addEventListener('DOMContentLoaded', () => {
     eraserToolButton.addEventListener('click', () => setActiveTool('eraser', eraserToolButton));
     sprayToolButton.addEventListener('click', () => setActiveTool('spray', sprayToolButton));
 
-    drawRectButton.addEventListener('click', () => setActiveTool('rectangle', drawRectButton));
-    drawCircleButton.addEventListener('click', () => setActiveTool('circle', drawCircleButton));
-    drawLineButton.addEventListener('click', () => setActiveTool('line', drawLineButton));
-    drawTriangleButton.addEventListener('click', () => setActiveTool('triangle', drawTriangleButton));
+    drawRectButton.addEventListener('click', () => setActiveShape('rectangle', drawRectButton));
+    drawCircleButton.addEventListener('click', () => setActiveShape('circle', drawCircleButton));
+    drawLineButton.addEventListener('click', () => setActiveShape('line', drawLineButton));
+    drawTriangleButton.addEventListener('click', () => setActiveShape('triangle', drawTriangleButton));
 
     resizeCanvasButton.addEventListener('click', () => {
         const width = parseInt(canvasWidthInput.value);
@@ -300,7 +366,5 @@ document.addEventListener('DOMContentLoaded', () => {
         updatePalette();
     });
 
-    sizePicker.addEventListener('input', updateToolInfo);
     setActiveTool('brush', brushToolButton);
-    updateToolInfo();
 });
