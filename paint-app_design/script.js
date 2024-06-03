@@ -1,3 +1,4 @@
+import CanvasUIObserver from './Observer/CanvasUIObserver.js';
 import {CanvasSubject} from './Observer/CanvasSubject.js';
 import {Brush} from './tools/Brush.js';
 import {Eraser} from './tools/Eraser.js';
