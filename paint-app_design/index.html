@@ -14,9 +14,20 @@
         </div>
 
         <div id="Picker" class="d-flex mb-3">
-            <input type="color" id="colorPicker" value="#000000" class="form-control form-control-color mr-2">
-            <input type="range" id="sizePicker" min="1" max="18" value="5" class="form-control-range">
+            <div class="input-group">
+                <label for="colorPicker" class="mr-2">Color:</label>
+                <input type="color" id="colorPicker" value="#000000" class="form-control form-control-color">
+            </div>
+            <div class="input-group">
+                <label for="sizePicker" class="mr-2">Size:</label>
+                <input type="range" id="sizePicker" min="1" max="18" value="5" class="form-control-range">
+            </div>
+            <div class="input-group">
+                <label for="opacitySlider" class="mr-2">Opacity:</label>
+                <input type="range" id="opacitySlider" min="0" max="1" step="0.1" value="1" class="form-control-range">
+            </div>
         </div>
+
 
         <div class='buttons mb-2'>
             <div class="tools-row">
@@ -38,14 +49,20 @@
             </div>
 
             <div class="figure-col">
-                <button id="drawRect" class="btn btn-info mb-2 w-100 tool">Rectangle</button>
-                <button id="drawCircle" class="btn btn-info mb-2 w-100 tool">Circle</button>
-                <button id="drawLine" class="btn btn-info mb-2 w-100 tool">Line</button>
-                <button id="drawTriangle" class="btn btn-info mb-2 w-100 tool">Triangle</button>
+                <select id="shapeSelector" class="custom-select mb-2 w-100 tool">
+                    <option value="rectangle">Rectangle</option>
+                    <option value="circle">Circle</option>
+                    <option value="line">Line</option>
+                    <option value="triangle">Triangle</option>
+                    <option value="star">Star</option>
+                    <option value="heart">Heart</option>
+                </select>
                 <div class="custom-control custom-checkbox mb-2">
                     <input type="checkbox" class="custom-control-input" id="fillCheckbox">
                     <label class="custom-control-label" for="fillCheckbox">Fill Shape</label>
                 </div>
+            </div>
+
             </div>
 
             <input type="number" id="canvasWidth" class="form-control mb-2" placeholder="Canvas Width" minlength="100" value="800">

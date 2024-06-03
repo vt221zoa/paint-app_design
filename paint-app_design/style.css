@@ -95,3 +95,13 @@ body {
 .paletteUnit.current {
 	border: 3px solid red;
 }
+
+#Picker {
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+}
+
+#Picker label {
+	margin-bottom: 5px;
+}
