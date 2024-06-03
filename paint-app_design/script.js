@@ -1,9 +1,20 @@
 import CanvasUIObserver from './Observer/CanvasUIObserver.js';
-import { CanvasSubject } from './Observer/CanvasSubject.js';
+import {CanvasSubject} from './Observer/CanvasSubject.js';
+import {Brush} from './tools/Brush.js';
+import {Eraser} from './tools/Eraser.js';
+import {Spray} from './tools/Spray.js';
+import {Marker} from './tools/Marker.js';
+import {OilBrush} from './tools/OilBrush.js';
+import {Line} from './shapes/Line.js';
+import {Rectangle} from './shapes/Rectangle.js';
+import {Circle} from './shapes/Circle.js';
+import {Triangle} from './shapes/Triangle.js';
+import {Star} from './shapes/Star.js';
+import {Heart} from './shapes/Heart.js';
 
-document.addEventListener('DOMContentLoaded',   () => {
+document.addEventListener('DOMContentLoaded', () => {
     const canvas = document.getElementById('paintCanvas');
-    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+    const ctx = canvas.getContext('2d', {willReadFrequently: true});
 
     const colorPicker = document.getElementById('colorPicker');
     const sizePicker = document.getElementById('sizePicker');
@@ -37,7 +48,6 @@ document.addEventListener('DOMContentLoaded',   () => {
     const paletteContainer = document.querySelector('.palette');
 
     const canvasSubject = new CanvasSubject();
-    const canvasUIObserver = new CanvasUIObserver(canvasSubject);
 
 
     const palette = [
@@ -108,159 +118,26 @@ document.addEventListener('DOMContentLoaded',   () => {
         currentTool.draw(e);
     }
 
-    class Tool {
-        draw(e) {
-            throw new Error("Method 'draw()' must be implemented.");
-        }
-    }
-
-    class Brush extends Tool {
-        constructor(ctx, colorPicker, sizePicker, opacitySlider) {
-            super();
-            this.ctx = ctx;
-            this.colorPicker = colorPicker;
-            this.sizePicker = sizePicker;
-            this.opacitySlider = opacitySlider;
-        }
-
-        draw(e) {
-            this.ctx.lineWidth = this.sizePicker.value;
-            this.ctx.lineCap = 'round';
-            this.ctx.strokeStyle = this.colorPicker.value;
-            this.ctx.globalAlpha = this.opacitySlider.value;
-
-            const [x, y] = getCursorPosition(e);
-            this.ctx.lineTo(x, y);
-            this.ctx.stroke();
-            this.ctx.beginPath();
-            this.ctx.moveTo(x, y);
-        }
-    }
-
-
-    class Eraser extends Tool {
-        constructor(ctx, sizePicker) {
-            super();
-            this.ctx = ctx;
-            this.sizePicker = sizePicker;
-        }
-
-        draw(e) {
-            this.ctx.lineWidth = this.sizePicker.value;
-            this.ctx.lineCap = 'round';
-            this.ctx.strokeStyle = '#ffffff';
-
-            const [x, y] = getCursorPosition(e);
-            this.ctx.lineTo(x, y);
-            this.ctx.stroke();
-            this.ctx.beginPath();
-            this.ctx.moveTo(x, y);
-        }
-    }
-
-    class Spray extends Tool {
-        constructor(ctx, palette, colorIndex, sizePicker, opacitySlider) {
-            super();
-            this.ctx = ctx;
-            this.palette = palette;
-            this.colorIndex = colorIndex;
-            this.sizePicker = sizePicker;
-            this.opacitySlider = opacitySlider;
-        }
-
-        draw(e) {
-            this.ctx.fillStyle = this.palette[this.colorIndex];
-            const [x, y] = getCursorPosition(e);
-            for (let i = 0; i < 10; i++) {
-                const offsetX = Math.random() * this.sizePicker.value - this.sizePicker.value / 2;
-                const offsetY = Math.random() * this.sizePicker.value - this.sizePicker.value / 2;
-                this.ctx.globalAlpha = Math.random() * this.opacitySlider.value; // Використовуємо opacitySlider
-                this.ctx.fillRect(x + offsetX, y + offsetY, 1, 1);
-            }
-        }
-    }
-    class Marker extends Tool {
-        constructor(ctx, colorPicker, sizePicker, opacitySlider) {
-            super();
-            this.ctx = ctx;
-            this.colorPicker = colorPicker;
-            this.sizePicker = sizePicker;
-            this.opacitySlider = opacitySlider;
-            this.initialAlpha = 0.5;
-        }
-
-        draw(e) {
-            this.ctx.lineWidth = this.sizePicker.value;
-            this.ctx.lineCap = 'round';
-            this.ctx.strokeStyle = this.colorPicker.value;
-            this.ctx.globalAlpha = this.initialAlpha * this.opacitySlider.value; // Використовуємо opacitySlider
-
-            const [x, y] = getCursorPosition(e);
-            this.ctx.lineTo(x, y);
-            this.ctx.stroke();
-            this.ctx.beginPath();
-            this.ctx.moveTo(x, y);
-
-            this.resetAlpha();
-        }
-
-        resetAlpha() {
-            this.ctx.globalAlpha = 1;
-        }
-    }
-
-    class OilBrush extends Tool {
-        constructor(ctx, colorPicker, sizePicker, opacitySlider) {
-            super();
-            this.ctx = ctx;
-            this.colorPicker = colorPicker;
-            this.sizePicker = sizePicker;
-            this.opacitySlider = opacitySlider;
-            this.density = 5;
-            this.initialAlpha = 0.2;
-        }
-
-        draw(e) {
-            this.ctx.lineWidth = this.sizePicker.value;
-            this.ctx.lineCap = 'round';
-            this.ctx.strokeStyle = this.colorPicker.value;
-            this.ctx.globalAlpha = this.initialAlpha * this.opacitySlider.value; // Використовуємо opacitySlider
-
-            const [x, y] = getCursorPosition(e);
-            for (let i = 0; i < this.density; i++) {
-                const offsetX = Math.random() * this.sizePicker.value - this.sizePicker.value / 2;
-                const offsetY = Math.random() * this.sizePicker.value - this.sizePicker.value / 2;
-                this.ctx.beginPath();
-                this.ctx.moveTo(x + offsetX, y + offsetY);
-                this.ctx.lineTo(x, y);
-                this.ctx.stroke();
-            }
-            this.resetAlpha();
-        }
-        resetAlpha() {
-            this.ctx.globalAlpha = 1;
-        }
-    }
-
     class ToolFactory {
         static createTool(type, ctx, colorPicker, sizePicker, palette, colorIndex, opacitySlider) {
             switch (type) {
                 case 'brush':
-                    return new Brush(ctx, colorPicker, sizePicker, opacitySlider);
+                    return new Brush(ctx, canvas, colorPicker, sizePicker, opacitySlider);
                 case 'eraser':
-                    return new Eraser(ctx, sizePicker, opacitySlider);
+                    return new Eraser(ctx, canvas, sizePicker);
                 case 'spray':
-                    return new Spray(ctx, palette, colorIndex, sizePicker, opacitySlider);
+                    return new Spray(ctx, canvas, palette, colorIndex, sizePicker, opacitySlider);
                 case 'oilBrush':
-                    return new OilBrush(ctx, colorPicker, sizePicker, opacitySlider);
+                    return new OilBrush(ctx, canvas, colorPicker, sizePicker, opacitySlider);
                 case 'marker':
-                    return new Marker(ctx, colorPicker, sizePicker, opacitySlider);
+                    return new Marker(ctx, canvas, colorPicker, sizePicker, opacitySlider);
                 default:
                     throw new Error("Unknown tool type.");
             }
         }
     }
-    let currentTool = ToolFactory.createTool('brush', ctx, colorPicker, sizePicker, palette, colorIndex);
+
+    let currentTool = ToolFactory.createTool('brush', ctx, canvas, colorPicker, sizePicker, palette, colorIndex);
 
     const opacitySlider = document.getElementById('opacitySlider');
 
@@ -288,146 +165,34 @@ document.addEventListener('DOMContentLoaded',   () => {
 
         switch (activeShape) {
             case 'rectangle':
-                drawRectangle(startX, startY, mouseX, mouseY);
+                const rectangle = new Rectangle(ctx, startX, startY, mouseX, mouseY, fillCheckbox.checked);
+                rectangle.draw();
                 break;
             case 'circle':
-                drawCircle(startX, startY, mouseX, mouseY);
+                const circle = new Circle(ctx, startX, startY, mouseX, mouseY, fillCheckbox.checked);
+                circle.draw();
                 break;
             case 'line':
-                drawLine(startX, startY, mouseX, mouseY);
+                const line = new Line(ctx, startX, startY, mouseX, mouseY);
+                line.draw();
                 break;
             case 'triangle':
-                drawTriangle(startX, startY, mouseX, mouseY);
+                const triangle = new Triangle(ctx, startX, startY, mouseX, mouseY, fillCheckbox.checked);
+                triangle.draw();
                 break;
             case 'star':
-                drawStar(startX, startY, mouseX, mouseY);
+                const star = new Star(ctx, startX, startY, mouseX, mouseY, fillCheckbox.checked);
+                star.draw();
                 break;
             case 'heart':
-                drawHeart(startX, startY, mouseX, mouseY);
+                const heart = new Heart(ctx, startX, startY, mouseX, mouseY, fillCheckbox.checked);
+                heart.draw();
                 break;
             default:
                 break;
         }
     }
 
-    function drawStar(startX, startY, endX, endY) {
-        var dx = endX - startX;
-        var dy = endY - startY;
-        var angle = Math.atan2(dy, dx);
-        var starRadius = Math.sqrt(dx*dx + dy*dy) / 2; // Радіус зірки (можна налаштувати)
-
-        ctx.lineCap = "round";
-        ctx.lineWidth = 2; // Товщина зірки (можна налаштувати)
-        ctx.beginPath();
-        ctx.moveTo(startX + Math.cos(angle) * starRadius, startY + Math.sin(angle) * starRadius);
-
-        for (var i = 0; i < 5; i++) {
-            ctx.lineTo(startX + Math.cos(angle + i * Math.PI * 0.4) * starRadius,
-                startY + Math.sin(angle + i * Math.PI * 0.4) * starRadius);
-            ctx.lineTo(startX + Math.cos(angle + (i + 0.5) * Math.PI * 0.4) * starRadius * 0.5,
-                startY + Math.sin(angle + (i + 0.5) * Math.PI * 0.4) * starRadius * 0.5);
-        }
-
-        ctx.closePath();
-        if (fillCheckbox.checked) {
-            ctx.fill(); // Заливаємо серце
-        } else {
-            ctx.stroke(); // Малюємо контур
-        }
-
-        ctx.restore();
-    }
-
-
-    function drawHeart(startX, startY, endX, endY) {
-        var x = startX;
-        var y = startY;
-        var width = Math.abs(endX - startX);
-        var height = Math.abs(endY - startY);
-
-        ctx.save();
-        ctx.beginPath();
-        var topCurveHeight = height * 0.3;
-        ctx.moveTo(x, y + topCurveHeight);
-        // top left curve
-        ctx.bezierCurveTo(
-            x, y,
-            x - width / 2, y,
-            x - width / 2, y + topCurveHeight
-        );
-
-        // bottom left curve
-        ctx.bezierCurveTo(
-            x - width / 2, y + (height + topCurveHeight) / 2,
-            x, y + (height + topCurveHeight) / 2,
-            x, y + height
-        );
-
-        // bottom right curve
-        ctx.bezierCurveTo(
-            x, y + (height + topCurveHeight) / 2,
-            x + width / 2, y + (height + topCurveHeight) / 2,
-            x + width / 2, y + topCurveHeight
-        );
-
-        // top right curve
-        ctx.bezierCurveTo(
-            x + width / 2, y,
-            x, y,
-            x, y + topCurveHeight
-        );
-
-        ctx.closePath();
-
-        if (fillCheckbox.checked) {
-            ctx.fill(); // Заливаємо серце
-        } else {
-            ctx.stroke(); // Малюємо контур
-        }
-
-        ctx.restore();
-    }
-
-
-
-    function drawRectangle(startX, startY, endX, endY) {
-        if (fillCheckbox.checked) {
-            ctx.fillRect(startX, startY, endX - startX, endY - startY);
-        } else {
-            ctx.strokeRect(startX, startY, endX - startX, endY - startY);
-        }
-    }
-
-    function drawCircle(startX, startY, endX, endY) {
-        const radius = Math.sqrt(Math.pow(endX - startX, 2) + Math.pow(endY - startY, 2));
-        ctx.beginPath();
-        ctx.arc(startX, startY, radius, 0, 2 * Math.PI);
-        if (fillCheckbox.checked) {
-            ctx.fill();
-        } else {
-            ctx.stroke();
-        }
-    }
-
-    function drawLine(startX, startY, endX, endY) {
-        ctx.beginPath();
-        ctx.moveTo(startX, startY);
-        ctx.lineTo(endX, endY);
-        ctx.stroke();
-    }
-
-    function drawTriangle(startX, startY, endX, endY) {
-        ctx.beginPath();
-        ctx.moveTo(startX, startY);
-        ctx.lineTo(endX, endY);
-        ctx.lineTo(startX + (startX - endX), endY);
-        ctx.closePath();
-        if (fillCheckbox.checked) {
-            ctx.fill();
-        } else {
-            ctx.stroke();
-        }
-    }
 
     function clearCanvas() {
         const confirmation = confirm('Are you sure you want to clear the canvas?');
@@ -487,17 +252,12 @@ document.addEventListener('DOMContentLoaded',   () => {
         activeShape = shapeType;
         document.querySelectorAll('.btn.tool').forEach(btn => btn.classList.remove('active'));
         button.classList.add('active');
-        updateObjectInfo(activeShape,sizePicker);
-    }
-
-    function getCursorPosition(e) {
-        const rect = canvas.getBoundingClientRect();
-        return [e.clientX - rect.left, e.clientY - rect.top];
+        updateObjectInfo(activeShape, sizePicker);
     }
 
     const shapeSelector = document.getElementById('shapeSelector');
 
-    shapeSelector.addEventListener('change', function() {
+    shapeSelector.addEventListener('change', function () {
         const selectedShape = shapeSelector.value;
         setActiveShape(selectedShape);
     });
